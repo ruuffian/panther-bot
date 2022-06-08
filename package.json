@@ -1,0 +1,22 @@
+{
+  "name": "panther-bot",
+  "version": "1.0.0",
+  "description": "A discord bot for the Panther Corps Community",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruuffian/panther-bot.git"
+  },
+  "author": "ruuffian",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ruuffian/panther-bot/issues"
+  },
+  "homepage": "https://github.com/ruuffian/panther-bot#readme",
+  "dependencies": {
+    "discord.js": "^13.8.0"
+  }
+}
