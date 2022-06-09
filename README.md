@@ -7,5 +7,5 @@ interact with databases.
 
 - [ ] Inhouse Generator
 - [ ] Pickems
-- [ ] Registering users and accoutns
+- [ ] Registering users and accounts
 - [ ] Some fun stuff ):
