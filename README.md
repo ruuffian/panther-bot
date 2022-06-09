@@ -5,7 +5,7 @@ interact with databases.
 
 ### Planned Features
 
-[x] - Inhouse Generator
-[x] - Pickems
-[x] - Registering users and accoutns
-[x] - Some fun stuff ):
+-[] Inhouse Generator
+-[] Pickems
+-[] Registering users and accoutns
+-[] Some fun stuff ):
