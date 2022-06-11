@@ -72,7 +72,10 @@ module.exports = {
 					});
 				}
 				else if (confirm === 'decline') {
-					await interaction.followUp('Registration canceled.');
+					await interaction.followUp({
+						content:'Registration canceled.', 
+						ephemeral: true
+					});
 				}
 			});
 			break;
@@ -105,7 +108,10 @@ module.exports = {
 					});
 				}
 				else if (confirm === 'decline') {
-					await interaction.followUp('Registration canceled.');
+					await interaction.followUp({
+						content: 'Registration canceled.', 
+						ephemeral: true
+					});
 				}
 			});
 			break;
