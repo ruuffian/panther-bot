@@ -4,7 +4,9 @@
   "description": "A discord bot for the Panther Corps Community",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --fix"
   },
   "repository": {
     "type": "git",
@@ -22,6 +24,7 @@
     "discord-api-types": "^0.33.5",
     "discord.js": "^13.8.0",
     "dotenv": "^16.0.1",
-    "pg": "^8.7.3"
+    "pg": "^8.7.3",
+    "uuid": "^8.3.2"
   }
 }

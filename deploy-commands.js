@@ -18,4 +18,4 @@ const { clientId, guildId, token } = require('./config.json');
 	rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
 		.then(() => console.log('Successfully registered application commands.'))
 		.catch(console.error);
-})()	
+})();

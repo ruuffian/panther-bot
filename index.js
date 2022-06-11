@@ -1,10 +1,11 @@
+/* Bot initialization */
 const fs = require('node:fs');
 const path = require('node:path');
-const {Client,Collection, Intents} = require('discord.js');
-const {token} = require('./config.json');
+const { Client, Collection, Intents } = require('discord.js');
+require('dotenv').config();
 
 // Create client instance
-const client = new Client({intents: [Intents.FLAGS.GUILDS]});
+const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
 // dynamically load commands from */commands directory
 client.commands = new Collection();
@@ -26,10 +27,34 @@ for (const file of eventFiles) {
 	const event = require(filePath);
 	if (event.once) {
 		client.once(event.name, (...args) => event.execute(...args));
-	} else {
+	}
+	else {
 		client.on(event.name, (...args) => event.execute(...args));
-	}}
+	}
+}
 
 
 // Login using token
-client.login(token);
+client.login(process.env.discordToken);
+
+/* Database Initialization */
+
+const { Pool } = require('pg');
+
+const pool = new Pool();
+
+pool.on('error', (err, c) => {
+	console.error('There was an unexpected db error', err);
+	process.exit(-1);
+});
+
+// // checkout a client
+// (async () => {
+// 	const client = await pool.connect();
+// 	try{
+// const res = await client.query(`SELECT * FROM user_lookup`, [1])
+// console.log(res.rows);
+// 	} finally{
+// 		client.release();
+// 	}
+// })().catch(err => console.log(err.stack));

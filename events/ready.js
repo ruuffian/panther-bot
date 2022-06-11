@@ -1,4 +1,3 @@
-const init = require('../deploy-commands')
 module.exports = {
 	name: 'ready',
 	once: true,
