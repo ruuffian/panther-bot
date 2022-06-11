@@ -6,6 +6,7 @@ interact with databases.
 ### Planned Features
 
 - [ ] Inhouse Generator
-- [ ] Pickems
+- [ ] Panther Corps Perfomance/Stat Tracking
+- [ ] LBLCS/Worlds/LXX Pickems
 - [ ] Registering users and accounts
 - [ ] Some fun stuff ):
