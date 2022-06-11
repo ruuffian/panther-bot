@@ -36,25 +36,3 @@ for (const file of eventFiles) {
 
 // Login using token
 client.login(process.env.discordToken);
-
-/* Database Initialization */
-
-const { Pool } = require('pg');
-
-const pool = new Pool();
-
-pool.on('error', (err, c) => {
-	console.error('There was an unexpected db error', err);
-	process.exit(-1);
-});
-
-// // checkout a client
-// (async () => {
-// 	const client = await pool.connect();
-// 	try{
-// const res = await client.query(`SELECT * FROM user_lookup`, [1])
-// console.log(res.rows);
-// 	} finally{
-// 		client.release();
-// 	}
-// })().catch(err => console.log(err.stack));
