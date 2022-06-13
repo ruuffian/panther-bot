@@ -65,14 +65,14 @@ module.exports = {
 					const values = [teamid, teamname];
 					db.query(text, values, async (err, res) => {
 						if (err) throw err;
-						await interaction.followUp({
+						await button.reply({
 							content:`Team ${res.rows[0].teamname} registered!`,
 							ephemeral: true,
 						});
 					});
 				}
 				else if (confirm === 'decline') {
-					await interaction.followUp({
+					await button.reply({
 						content:'Registration canceled.', 
 						ephemeral: true
 					});
@@ -101,14 +101,14 @@ module.exports = {
 					const values = [userid, teamid];
 					db.query(text, values, async (err, res) => {
 						if (err) throw err;
-						await interaction.followUp({
+						await button.reply({
 							content:`Player ${res.rows[0].userid} registered for team ${res.rows[0].teamid}!`,
 							ephemeral: true,
 						});
 					});
 				}
 				else if (confirm === 'decline') {
-					await interaction.followUp({
+					await button.reply({
 						content: 'Registration canceled.', 
 						ephemeral: true
 					});
