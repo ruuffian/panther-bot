@@ -12,7 +12,7 @@ module.exports = {
 		}
 		catch (error) {
 			console.error(error);
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
 		}
 		// Basic logging
 		console.log(`${interaction.user.tag} in #${interaction.channel.name} triggered an interaction.`);

@@ -16,7 +16,7 @@ CREATE TABLE "users" (
   PRIMARY KEY(userid),
   CONSTRAINT fk_teamid
     FOREIGN KEY(teamid)
-      REFERENCES teams(team_id)
+      REFERENCES teams(teamid)
       ON DELETE SET NULL
 );
 
@@ -33,7 +33,7 @@ CREATE TABLE "teamlookup" (
   "teamid" CHAR(37),
   "teamname" VARCHAR(255) NOT NULL,
   CONSTRAINT fk_teamid
-    FOREIGN KEY teamid
+    FOREIGN KEY(teamid)
       REFERENCES teams(teamid)
       ON DELETE CASCADE
 );
@@ -46,7 +46,7 @@ CREATE TABLE "riot_info" (
   "summonerlevel" SMALLINT,
   "revisionDate" INTEGER,
   CONSTRAINT fk_userid
-    FOREIGN KEY userid
+    FOREIGN KEY(userid)
       REFERENCES users(userid)
       ON DELETE CASCADE
 );
