@@ -1,10 +1,40 @@
-const db = require('../db');
+const db = require('../db/index.js');
 require('dotenv').config();
 
-const text = 'SELECT * FROM users';
-const values = [];
+const query = {
+	text: 'SELECT * FROM users',
+	values: [],
+};
 
-db.query(text, values, (err, res) => {
-	if (err) throw err;
-	console.log(res.rows);
-});
+(async () => {
+	const res = await db.query(query);
+	console.log('Single query::', res.rows);
+})();
+
+(async () => {
+	console.log('Transaction::');
+	const client = await db.getClient();
+	try {
+		await client.query('BEGIN');
+		const select_users = {
+			text: 'SELECT * FROM users',
+			values: [],
+		};
+		const users = await client.query(select_users);
+		console.log('First query::', users.rows);
+		const select_teams = {
+			text: 'SELECT * FROM teams',
+			values: [],
+		};
+		const teams = await client.query(select_teams);
+		console.log('Second query::', teams.rows);
+		await client.query('COMMIT');
+	}
+	catch (e) {
+		await client.query('ROLLBACK');
+		throw e;
+	}
+	finally {
+		client.release();
+	}
+})().catch(err => console.log(err));

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint commands/* events/* *.js --fix"
+    "lint": "eslint db/*.js tests/*.js commands/* events/* *.js --fix"
   },
   "repository": {
     "type": "git",
