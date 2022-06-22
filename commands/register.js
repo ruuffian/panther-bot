@@ -73,8 +73,8 @@ module.exports = {
 				}
 				else if (confirm === 'decline') {
 					await interaction.followUp({
-						content:'Registration canceled.', 
-						ephemeral: true
+						content:'Registration canceled.',
+						ephemeral: true,
 					});
 				}
 			});
@@ -109,8 +109,8 @@ module.exports = {
 				}
 				else if (confirm === 'decline') {
 					await interaction.followUp({
-						content: 'Registration canceled.', 
-						ephemeral: true
+						content: 'Registration canceled.',
+						ephemeral: true,
 					});
 				}
 			});
