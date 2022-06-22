@@ -113,7 +113,6 @@ module.exports = {
 					});
 				}
 				else if (confirm === 'decline') {
-					await button.reply({
 						content:'Registration canceled.',
 						ephemeral: true,
 					});
@@ -172,7 +171,6 @@ module.exports = {
 							components: [],
 							ephemeral: true,
 						});
-
 					}
 					else if (button.customId === 'decline') {
 						await interaction.editReply({

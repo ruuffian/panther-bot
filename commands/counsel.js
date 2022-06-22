@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
+const cfg = require('../config.json');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -6,15 +7,15 @@ module.exports = {
 		.setDescription('Lists the current Panther Corps Staff members'),
 	async execute(interaction) {
 		const counselEmbed = {
-			color: 0x2952f0,
+			color: cfg.color,
 			title: 'The Counsel',
 			author: {
 				name: 'ruuffian',
-				icon_url: 'https://i.imgur.com/ntBDWzO.png',
+				icon_url: cfg.authorIcon,
 			},
 			description: 'The residing counsel of Panther Corps',
 			thumbnail: {
-				url: 'https://i.imgur.com/TGoK7ho.png',
+				url: cfg.logo,
 			},
 			fields: [
 				{
@@ -66,10 +67,11 @@ module.exports = {
 			timestamp: new Date(),
 			footer: {
 				text: 'This message was brought to you by ruuffian',
-				icon_url: 'https://i.imgur.com/ntBDWzO.png',
+				icon_url: cfg.authorIcon,
 			},
 
 		};
+
 		await interaction.reply({ embeds: [counselEmbed] });
 	},
 };
