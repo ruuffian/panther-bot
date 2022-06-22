@@ -2,7 +2,7 @@ require('dotenv').config();
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageActionRow, MessageButton } = require('discord.js');
 const { v4 } = require('uuid');
-const postgres = require('../db/index.js');
+const db = require('../db/index.js');
 
 const row = new MessageActionRow()
 	.addComponents(
@@ -85,39 +85,47 @@ module.exports = {
 		case 'team': {
 			const teamname = interaction.options.getString('name');
 			const captain = interaction.options.getString('captain');
-			await interaction.reply({
+			const confirmation = {
 				content: `Registering ${teamname} with captain ${captain}?`,
 				components: [row],
 				ephemeral: true,
-			});
-
-			interaction.client.once('interactionCreate', async button => {
-				if (!button.isButton()) return;
-				const confirm = button.customId;
-				if (confirm === 'accept') {
-					let text = 'INSERT INTO teams VALUES ($1, $2)';
-					const teamid = v4();
-					let values = [teamid, captain];
-					postgres.query(text, values, (err, _) => {
-						if (err) throw err;
-					});
-
-					text = 'INSERT INTO teamlookup VALUES ($1, $2) RETURNING *';
-					values = [teamid, teamname];
-					postgres.query(text, values, async (err, res) => {
-						if (err) throw err;
-						await button.reply({
-							content:`Team ${res.rows[0].teamname} registered!`,
-							ephemeral: true,
+				fetchReply: true,
+			};
+			const message = await interaction.reply(confirmation);
+			const filter = i => {
+				return i.user.id === interaction.user.id;
+			};
+			message.awaitMessageComponent({ filter, time: 15000 })
+				.then(async button => {
+					if (button.customId === 'accept') {
+						try {
+							const teamid = v4();
+							const insertTeam = {
+								text: 'INSERT INTO teams VALUES ($1, $2)',
+								values: [teamid, captain],
+							};
+							await db.query(insertTeam);
+							const insertTeamRelation = {
+								text: 'INSERT INTO teamlookup VALUES ($1, $2)',
+								values: [teamid, teamname],
+							};
+							await db.query(insertTeamRelation);
+							await interaction.editReply({
+								content:`Team ${teamname} registered!`,
+								components: [],
+							});
+						}
+						catch (e) {
+							console.log(e.stack);
+						}
+					}
+					else {
+						await interaction.editReply({
+							content: 'Registration canceled.',
+							components: [],
 						});
-					});
-				}
-				else if (confirm === 'decline') {
-						content:'Registration canceled.',
-						ephemeral: true,
-					});
-				}
-			});
+					}
+				});
 			break;
 		}
 		// register player subcommand
@@ -136,54 +144,58 @@ module.exports = {
 				return i.user.id === interaction.user.id;
 			};
 			const message = await interaction.reply(confirmation);
-			message.awaitMessageComponent({ filter, time: 60000 })
+			message.awaitMessageComponent({ filter, time: 15000 })
 				.then(async button => {
 					if (button.customId === 'accept') {
-						// convert team name into teamid
-						let text = 'SELECT teamid FROM teamlookup WHERE teamname=$1';
-						let values = [teamname];
-						let teamid;
-						postgres.query(text, values, async (err, res) => {
-							if (err) throw err;
-							teamid = await res.rows[0].teamid;
-						});
-						// insert player into users db
-						text = 'INSERT INTO users VALUES ($1, $2, $3, $4) RETURNING userid';
-						const userid = v4();
-						const starter = interaction.options.getBoolean('starter');
-						const position = interaction.options.getString('position');
-						values = [userid, teamid, starter, position];
-						postgres.query(text, values, async (err, res) => {
-							if (err) throw err;
-							await res.rows[0].userid;
-							console.log('Table \'users\' updated.');
-						});
-						// insert relationship into userlookup table
-						text = 'INSERT INTO userlookup VALUES ($1, $2) RETURNING username';
-						values = [userid, playername];
-						postgres.query(text, values, async (err, res) => {
-							if (err) throw err;
-							await res.rows[0].username;
-							console.log('Table \'userlookup\' updated.');
-						});
-						await interaction.editReply({
-							content:`Player ${playername} registered for team ${teamname}!`,
-							components: [],
-							ephemeral: true,
-						});
+						const client = db.getClient();
+						// begin database transaction
+						try {
+							await client.query('BEGIN');
+							// convert team name into teamid
+							const selectTeamId = {
+								text: 'SELECT teamid FROM teamlookup WHERE teamname=$1',
+								values: [teamname],
+							};
+							const teamid = await client.query(selectTeamId).rows[0].teamid;
+							// insert player into users db
+							const userid = v4();
+							const starter = interaction.options.getBoolean('starter');
+							const position = interaction.options.getString('position');
+							const insertPlayer = {
+								text: 'INSERT INTO users VALUES ($1, $2, $3, $4)',
+								values: [userid, teamid, starter, position],
+							};
+							await client.query(insertPlayer);
+							// insert relationship into userlookup table
+							const insertUserRelation = {
+								text: 'INSERT INTO userlookup VALUES ($1, $2)',
+								values: [userid, playername],
+							};
+							await client.query(insertUserRelation);
+							await client.query('COMMIT');
+							await interaction.editReply({
+								content:`Player ${playername} registered for team ${teamname}!`,
+								components: [],
+							});
+						}
+						catch (e) {
+							await client.query('ROLLBACK');
+							console.log(e.stack);
+						}
+						finally {
+							client.release();
+						}
 					}
 					else if (button.customId === 'decline') {
 						await interaction.editReply({
 							content: 'Registration canceled.',
 							components: [],
-							ephemeral: true,
 						});
 					}
 					else {
 						await interaction.editReply({
-							content: 'Something went wrong.',
+							content: 'Something went wrong, contact ruuffian',
 							components: [],
-							ephemeral: true,
 						});
 					}
 				});
