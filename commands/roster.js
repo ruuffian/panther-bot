@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const db = require('../db/index');
 const cfg = require('../config.json');
+const { registeredTeams } = require('../config.json');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -11,32 +12,23 @@ module.exports = {
 				.setName('team')
 				.setDescription('The team to fetch!')
 				.setRequired(true)
-				.addChoices(
-					{ name: 'Econ', value: 'Economy' },
-				)),
+				.addChoices(...registeredTeams)),
 	async execute(interaction) {
-		const teamname = interaction.options.getString('team');
-		// Convert to ID
-		let text = 'SELECT teamid FROM teamlookup WHERE teamname=$1';
-		let values = [teamname];
-		let teamid;
-		db.query(text, values, async (err, res) => {
-			if (err) throw err;
-			teamid = await res.rows[0].teamid;
-		});
-		text = 'SELECT userlookup.username, users.position, users.starter FROM users INNER JOIN userlookup ON users.userid=userlookup.userid AND users.teamid=$1';
-		values = [teamid];
-		let team;
-		db.query(text, values, async (err, res) => {
-			if (err) throw err;
-			team = await res.rows;
-		});
-		// Set Headers - Team  Captain
-		//				 Team1 Captain1
+		const teamid = interaction.options.getString('team');
+		const selectUsersByTeamId = {
+			text: 'SELECT userlookup.username, users.position, users.starter FROM users INNER JOIN userlookup ON users.userid=userlookup.userid AND users.teamid=$1',
+			values: [teamid] 
+		};
+		const users = await db.query(selectUsersByTeamId);
+		const selectTeamName = {
+			text: 'SELECT teamname FROM teamlookup WHERE teamid=$1',
+			values: [teamid],
+		};
+		const teamname = await db.query(selectTeamName);
 		const fields = [
-			{ name: teamname, value: '\u200b', inline: false },
+			{ name: teamname ===undefined ? teamname : 'No Players!', value: '\u200b', inline: false },
 		];
-		for (const player in team) {
+		for (const player of users.rows) {
 			fields.push({
 				name: player.username,
 				value: player.starter ? player.pos : 'Sub',

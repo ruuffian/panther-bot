@@ -2,7 +2,7 @@
   "name": "panther-bot",
   "version": "1.0.0",
   "description": "A discord bot for the Panther Corps Community",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "start": "node .",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -26,5 +26,8 @@
     "dotenv": "^16.0.1",
     "pg": "^8.7.3",
     "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.16"
   }
 }

@@ -7,6 +7,9 @@ pool.on('error', (err, _) => {
 	process.exit(-1);
 });
 
+pool.on('acquire', client => {
+	console.log(`Client checked out`)
+})
 
 // Queries pg with a query object and logs the time, query text, and amount of data returned
 module.exports = {
@@ -18,30 +21,15 @@ module.exports = {
 		return res;
 	},
 	async getClient() {
-		const client = await pool.connect();
-		// save initial state
-		const query = client.query;
-		const release = client.release;
-		// Times out after 3 seconds and logs last query to identify leaks
-		const timeout = setTimeout(() => {
-			console.log('A client has been checked out for more than 5 seconds!');
-			console.log(`The last executed query on this client was: ${client.lastQuery}`);
-		}, 3000);
-		// set query to last query
-		client.query = (...args) => {
-			client.lastQuery = args;
-			return query.apply(client, args);
+		const poolClient = await pool.connect();
+		poolClient.query = (...args) => {
+			const start = Date.now();
+			const apply = query.apply(poolClient, args);
+			const duration = Date.now() - start;
+			console.log(`Executed ${typeof(args) === typepof({}) ? args.text : args} @${new Date(Date.now()).toISOString()} returning ${apply.rowCount === undefined ? 0 : apply.rowcount} rows taking ${duration}ms.`);
+			return apply;
 		};
-		client.release = () => {
-			clearTimeout(timeout);
-			client.query = query;
-			client.release = release;
-			return release.apply(client);
-		};
-		// basic logging
-		client.on('error', err => {
-			console.log('node-pg error', err.stack);
-		});
-		return client;
+		console.log(poolClient);
+		return poolClient;
 	},
 };

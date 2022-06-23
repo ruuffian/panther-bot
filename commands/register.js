@@ -3,8 +3,9 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageActionRow, MessageButton } = require('discord.js');
 const { v4 } = require('uuid');
 const db = require('../db/index.js');
+const { registeredTeams, positions } = require('../config.json');
 
-const row = new MessageActionRow()
+const confirmationButtons = new MessageActionRow()
 	.addComponents(
 		new MessageButton()
 			.setCustomId('accept')
@@ -52,10 +53,7 @@ module.exports = {
 						.setName('team')
 						.setDescription('The team to register the player to!')
 						.setRequired(true)
-						.addChoices(
-							{ name: 'Econ', value: 'Economy' },
-							{ name: 'Exec', value: 'Executive' },
-						),
+						.addChoices(...registeredTeams),
 				)
 				.addBooleanOption(option =>
 					option
@@ -68,15 +66,7 @@ module.exports = {
 						.setName('position')
 						.setDescription('The position the player plays.')
 						.setRequired(true)
-						.addChoices(
-							{ name: 'Top', value: 'TOP' },
-							{ name: 'Jungle', value: 'JUNG' },
-							{ name: 'Mid', value: 'MID' },
-							{ name: 'ADC', value: 'ADC' },
-							{ name: 'Support', value: 'SUP' },
-							{ name: 'Fill', value: 'FILL' },
-
-						)),
+						.addChoices(...positions)),
 		),
 	async execute(interaction) {
 		const subcommand = interaction.options.getSubcommand();
@@ -85,38 +75,45 @@ module.exports = {
 		case 'team': {
 			const teamname = interaction.options.getString('name');
 			const captain = interaction.options.getString('captain');
-			const confirmation = {
+			const confirmationMessage = {
 				content: `Registering ${teamname} with captain ${captain}?`,
-				components: [row],
+				components: [confirmationButtons],
 				ephemeral: true,
 				fetchReply: true,
 			};
-			const message = await interaction.reply(confirmation);
+			const message = await interaction.reply(confirmationMessage);
 			const filter = i => {
 				return i.user.id === interaction.user.id;
 			};
-			message.awaitMessageComponent({ filter, time: 15000 })
-				.then(async button => {
+			const button = await message.awaitMessageComponent({ filter, time: 15000 })
 					if (button.customId === 'accept') {
+						// Checkout client for db transaction
+						const client = await db.getClient();
 						try {
+							await client.query('BEGIN');
 							const teamid = v4();
 							const insertTeam = {
 								text: 'INSERT INTO teams VALUES ($1, $2)',
 								values: [teamid, captain],
 							};
-							await db.query(insertTeam);
+							await client.query(insertTeam);
 							const insertTeamRelation = {
 								text: 'INSERT INTO teamlookup VALUES ($1, $2)',
 								values: [teamid, teamname],
 							};
-							await db.query(insertTeamRelation);
+							await client.query(insertTeamRelation);
+							await client.query('COMMIT');
 							await interaction.editReply({
 								content:`Team ${teamname} registered!`,
 								components: [],
 							});
 						}
 						catch (e) {
+							client.query('ROLLBACK');
 							console.log(e.stack);
+						}
+						finally {
+							client.release();
 						}
 					}
 					else {
@@ -125,7 +122,6 @@ module.exports = {
 							components: [],
 						});
 					}
-				});
 			break;
 		}
 		// register player subcommand
@@ -135,7 +131,7 @@ module.exports = {
 			// confirm input
 			const confirmation = {
 				content: `Registering ${playername} to team ${teamname}?`,
-				components: [row],
+				components: [confirmationButtons],
 				ephemeral: true,
 				fetchReply: true,
 			};
@@ -180,7 +176,7 @@ module.exports = {
 						}
 						catch (e) {
 							await client.query('ROLLBACK');
-							console.log(e.stack);
+							throw err;
 						}
 						finally {
 							client.release();
@@ -198,7 +194,8 @@ module.exports = {
 							components: [],
 						});
 					}
-				});
+				})
+				.catch(err => console.log(err.stack));
 			break;
 		}
 		}
