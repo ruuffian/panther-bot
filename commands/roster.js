@@ -17,7 +17,7 @@ module.exports = {
 		const teamid = interaction.options.getString('team');
 		const selectUsersByTeamId = {
 			text: 'SELECT userlookup.username, users.position, users.starter FROM users INNER JOIN userlookup ON users.userid=userlookup.userid AND users.teamid=$1',
-			values: [teamid] 
+			values: [teamid],
 		};
 		const users = await db.query(selectUsersByTeamId);
 		const selectTeamName = {
@@ -26,7 +26,7 @@ module.exports = {
 		};
 		const teamname = await db.query(selectTeamName);
 		const fields = [
-			{ name: teamname ===undefined ? teamname : 'No Players!', value: '\u200b', inline: false },
+			{ name: teamname === undefined ? teamname : 'No Players!', value: '\u200b', inline: false },
 		];
 		for (const player of users.rows) {
 			fields.push({

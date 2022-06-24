@@ -85,49 +85,54 @@ module.exports = {
 			const filter = i => {
 				return i.user.id === interaction.user.id;
 			};
-			const button = await message.awaitMessageComponent({ filter, time: 15000 })
-					if (button.customId === 'accept') {
-						// Checkout client for db transaction
-						const client = await db.getClient();
-						try {
-							await client.query('BEGIN');
-							const teamid = v4();
-							const insertTeam = {
-								text: 'INSERT INTO teams VALUES ($1, $2)',
-								values: [teamid, captain],
-							};
-							await client.query(insertTeam);
-							const insertTeamRelation = {
-								text: 'INSERT INTO teamlookup VALUES ($1, $2)',
-								values: [teamid, teamname],
-							};
-							await client.query(insertTeamRelation);
-							await client.query('COMMIT');
-							await interaction.editReply({
-								content:`Team ${teamname} registered!`,
-								components: [],
-							});
-						}
-						catch (e) {
-							client.query('ROLLBACK');
-							console.log(e.stack);
-						}
-						finally {
-							client.release();
-						}
-					}
-					else {
-						await interaction.editReply({
-							content: 'Registration canceled.',
-							components: [],
-						});
-					}
+			const button = await message.awaitMessageComponent({ filter, time: 15000 });
+			if (button.customId === 'accept') {
+				// Checkout client for db transaction
+				const client = await db.getClient();
+				try {
+					await client.query('BEGIN');
+					const teamid = v4();
+					const insertTeam = {
+						text: 'INSERT INTO teams VALUES ($1, $2)',
+						values: [teamid, captain],
+					};
+					await client.query(insertTeam);
+					const insertTeamRelation = {
+						text: 'INSERT INTO teamlookup VALUES ($1, $2)',
+						values: [teamid, teamname],
+					};
+					await client.query(insertTeamRelation);
+					await client.query('COMMIT');
+					await interaction.editReply({
+						content:`Team ${teamname} registered!`,
+						components: [],
+					});
+				}
+				catch (e) {
+					client.query('ROLLBACK');
+					console.log(e.stack);
+				}
+				finally {
+					client.release();
+				}
+			}
+			else {
+				await interaction.editReply({
+					content: 'Registration canceled.',
+					components: [],
+				});
+			}
 			break;
 		}
 		// register player subcommand
 		case 'player': {
 			const playername = interaction.options.getString('name');
-			const teamname = interaction.options.getString('team');
+			const teamid = interaction.options.getString('team');
+			const selectTeamName = {
+				text: 'SELECT teamname FROM teamlookup WHERE teamid=$1',
+				values: [teamid],
+			};
+			const teamname = await db.query(selectTeamName).rows[0].teamid;
 			// confirm input
 			const confirmation = {
 				content: `Registering ${playername} to team ${teamname}?`,
@@ -140,62 +145,58 @@ module.exports = {
 				return i.user.id === interaction.user.id;
 			};
 			const message = await interaction.reply(confirmation);
-			message.awaitMessageComponent({ filter, time: 15000 })
-				.then(async button => {
-					if (button.customId === 'accept') {
-						const client = db.getClient();
-						// begin database transaction
-						try {
-							await client.query('BEGIN');
-							// convert team name into teamid
-							const selectTeamId = {
-								text: 'SELECT teamid FROM teamlookup WHERE teamname=$1',
-								values: [teamname],
-							};
-							const teamid = await client.query(selectTeamId).rows[0].teamid;
-							// insert player into users db
-							const userid = v4();
-							const starter = interaction.options.getBoolean('starter');
-							const position = interaction.options.getString('position');
-							const insertPlayer = {
-								text: 'INSERT INTO users VALUES ($1, $2, $3, $4)',
-								values: [userid, teamid, starter, position],
-							};
-							await client.query(insertPlayer);
-							// insert relationship into userlookup table
-							const insertUserRelation = {
-								text: 'INSERT INTO userlookup VALUES ($1, $2)',
-								values: [userid, playername],
-							};
-							await client.query(insertUserRelation);
-							await client.query('COMMIT');
-							await interaction.editReply({
-								content:`Player ${playername} registered for team ${teamname}!`,
-								components: [],
-							});
-						}
-						catch (e) {
-							await client.query('ROLLBACK');
-							throw err;
-						}
-						finally {
-							client.release();
-						}
-					}
-					else if (button.customId === 'decline') {
+			const button = await message.awaitMessageComponent({ filter, time: 15000 });
+			try {
+				if (button.customId === 'accept') {
+					const client = db.getClient();
+					// begin database transaction
+					try {
+						await client.query('BEGIN');
+						// insert player into users db
+						const userid = v4();
+						const starter = interaction.options.getBoolean('starter');
+						const position = interaction.options.getString('position');
+						const insertPlayer = {
+							text: 'INSERT INTO users VALUES ($1, $2, $3, $4)',
+							values: [userid, teamid, starter, position],
+						};
+						await client.query(insertPlayer);
+						// insert relationship into userlookup table
+						const insertUserRelation = {
+							text: 'INSERT INTO userlookup VALUES ($1, $2)',
+							values: [userid, playername],
+						};
+						await client.query(insertUserRelation);
+						await client.query('COMMIT');
 						await interaction.editReply({
-							content: 'Registration canceled.',
+							content:`Player ${playername} registered for team ${teamname}!`,
 							components: [],
 						});
 					}
-					else {
-						await interaction.editReply({
-							content: 'Something went wrong, contact ruuffian',
-							components: [],
-						});
+					catch (err) {
+						await client.query('ROLLBACK');
+						throw err;
 					}
-				})
-				.catch(err => console.log(err.stack));
+					finally {
+						client.release();
+					}
+				}
+				else if (button.customId === 'decline') {
+					await interaction.editReply({
+						content: 'Registration canceled.',
+						components: [],
+					});
+				}
+				else {
+					await interaction.editReply({
+						content: 'Something went wrong, contact ruuffian',
+						components: [],
+					});
+				}
+			}
+			catch (err) {
+				console.log(err.stack);
+			}
 			break;
 		}
 		}

@@ -7,9 +7,9 @@ pool.on('error', (err, _) => {
 	process.exit(-1);
 });
 
-pool.on('acquire', client => {
-	console.log(`Client checked out`)
-})
+pool.on('acquire', () => {
+	console.log('Client checked out');
+});
 
 // Queries pg with a query object and logs the time, query text, and amount of data returned
 module.exports = {
@@ -24,9 +24,9 @@ module.exports = {
 		const poolClient = await pool.connect();
 		poolClient.query = (...args) => {
 			const start = Date.now();
-			const apply = query.apply(poolClient, args);
+			const apply = poolClient.query.apply(poolClient, args);
 			const duration = Date.now() - start;
-			console.log(`Executed ${typeof(args) === typepof({}) ? args.text : args} @${new Date(Date.now()).toISOString()} returning ${apply.rowCount === undefined ? 0 : apply.rowcount} rows taking ${duration}ms.`);
+			console.log(`Executed ${typeof args === typeof '' ? args : args.text} @${new Date(Date.now()).toISOString()} returning ${apply.rowCount === undefined ? 0 : apply.rowcount} rows taking ${duration}ms.`);
 			return apply;
 		};
 		console.log(poolClient);
