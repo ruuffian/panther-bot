@@ -5,20 +5,8 @@
 	"logo": "https://i.imgur.com/TGoK7ho.png",
 	"registeredTeams": [
 		{
-			"name": "PC Ghosts",
-			"value": "e8f302e7-2690-48e2-b3fb-6c00ffdbbd12 "
-		},
-		{
-			"name": "PC Highlanders",
-			"value": "da8a4254-1c98-4ea5-8103-e5633435c119 "
-		},
-		{
-			"name": "PC Sentinels",
-			"value": "bf618e44-f434-4632-ad02-ad2f838b6461 "
-		},
-		{
-			"name": "PC Recruits",
-			"value": "1070b751-207c-452a-8fcb-550aaaca9bd7 "
+			"name": "Test Team",
+			"value": "4eed5f5f-7519-4cf0-9cfd-c77ff0d164ea "
 		}
 	],
 	"positions": [

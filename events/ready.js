@@ -20,7 +20,7 @@ module.exports = {
 			json.registeredTeams = choices;
 			await fs.writeFile('config.json', JSON.stringify(json, null, '\t'), 'utf-8');
 			console.log('Updated registered teams in config.json');
-			require('../deploy-commands');
+			// require('../deploy-commands');
 			console.log(`Ready! Logged in as ${client.user.tag}`);
 		}
 		catch (err) {

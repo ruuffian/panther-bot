@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node .",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node tests/dbtest.js",
     "lint": "eslint db/*.js tests/*.js commands/* events/* *.js --fix"
   },
   "repository": {
@@ -27,7 +27,5 @@
     "pg": "^8.7.3",
     "uuid": "^8.3.2"
   },
-  "devDependencies": {
-    "nodemon": "^2.0.16"
-  }
+  "devDependencies": {}
 }

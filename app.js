@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 /* Bot initialization */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -7,7 +8,7 @@ const { Client, Collection, Intents } = require('discord.js');
 // Create client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
-// dynamically load commands from */commands directory
+// dynamically load commands from */commands directory and store in a discord.js Collection
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -19,7 +20,7 @@ for (const file of commandFiles) {
 	client.commands.set(command.data.name, command);
 }
 
-// Construct event handlers
+// Load event handlers from */events
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 

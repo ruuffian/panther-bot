@@ -19,61 +19,95 @@ const confirmationButtons = new MessageActionRow()
 
 module.exports = {
 	data: new SlashCommandBuilder()
+		.setDefaultMemberPermissions(0)
 		.setName('register')
-		.setDescription('Register a team or player with Panther Bot!')
-		.addSubcommand(command =>
-			command
-				.setName('team')
-				.setDescription('Register a team!')
-				.addStringOption(option =>
-					option
-						.setName('name')
-						.setDescription('The name of the team to be registered!')
-						.setRequired(true),
-				)
-				.addStringOption(option =>
-					option
-						.setName('captain')
-						.setDescription('The team captain')
-						.setRequired(true),
-				),
-		)
-		.addSubcommand(command =>
-			command
-				.setName('player')
-				.setDescription('Register a player to a team!')
-				.addStringOption(option =>
-					option
-						.setName('name')
-						.setDescription('The name of the player to be registered!')
-						.setRequired(true),
-				)
-				.addStringOption(option =>
-					option
+		.setDescription('Register or unregister a team or player with Panther Bot!')
+		.addSubcommandGroup(group =>
+			group
+				.setName('add')
+				.setDescription('Add a player or team!')
+				.addSubcommand(command =>
+					command
 						.setName('team')
-						.setDescription('The team to register the player to!')
-						.setRequired(true)
-						.addChoices(...registeredTeams),
+						.setDescription('Register a team!')
+						.addStringOption(option =>
+							option
+								.setName('teamname')
+								.setDescription('The name of the team to be registered!')
+								.setRequired(true),
+						)
+						.addStringOption(option =>
+							option
+								.setName('captain')
+								.setDescription('The team captain')
+								.setRequired(true),
+						),
 				)
-				.addBooleanOption(option =>
-					option
-						.setName('starter')
-						.setDescription('Is this player a starter?')
-						.setRequired(true),
+				.addSubcommand(command =>
+					command
+						.setName('player')
+						.setDescription('Register a player to a team!')
+						.addStringOption(option =>
+							option
+								.setName('username')
+								.setDescription('The name of the player to be registered!')
+								.setRequired(true),
+						)
+						.addStringOption(option =>
+							option
+								.setName('teamname')
+								.setDescription('The team to register the player to!')
+								.setRequired(true)
+								.addChoices(...registeredTeams),
+						)
+						.addBooleanOption(option =>
+							option
+								.setName('starter')
+								.setDescription('Is this player a starter?')
+								.setRequired(true),
+						)
+						.addStringOption(option =>
+							option
+								.setName('position')
+								.setDescription('The position the player plays.')
+								.setRequired(true)
+								.addChoices(...positions)),
+				))
+		.addSubcommandGroup(group =>
+			group
+				.setName('remove')
+				.setDescription('Remove a player or team!')
+				.addSubcommand(command =>
+					command
+						.setName('team')
+						.setDescription('Remove a team!')
+						.addStringOption(option =>
+							option
+								.setName('teamname')
+								.setDescription('The team to be removed.')
+								.setRequired(true)
+								.addChoices(...registeredTeams),
+						),
 				)
-				.addStringOption(option =>
-					option
-						.setName('position')
-						.setDescription('The position the player plays.')
-						.setRequired(true)
-						.addChoices(...positions)),
+				.addSubcommand(command =>
+					command
+						.setName('player')
+						.setDescription('Remove a player!')
+						.addStringOption(option =>
+							option
+								.setName('username')
+								.setDescription('The player to be removed.')
+								.setRequired(true),
+						),
+				),
 		),
 	async execute(interaction) {
 		const subcommand = interaction.options.getSubcommand();
+        await interaction.deferReply();
 		switch (subcommand) {
-		// register ream subcommand
+		// register team subcommand
 		case 'team': {
-			const teamname = interaction.options.getString('name');
+			const teamname = interaction.options.getString('teamname');
 			const captain = interaction.options.getString('captain');
 			const confirmationMessage = {
 				content: `Registering ${teamname} with captain ${captain}?`,
@@ -81,7 +115,7 @@ module.exports = {
 				ephemeral: true,
 				fetchReply: true,
 			};
-			const message = await interaction.reply(confirmationMessage);
+			const message = await interaction.followUp(confirmationMessage);
 			const filter = i => {
 				return i.user.id === interaction.user.id;
 			};
@@ -91,7 +125,7 @@ module.exports = {
 				const client = await db.getClient();
 				try {
 					await client.query('BEGIN');
-					const teamid = v4();
+					const teamid = v4(0, null, 0);
 					const insertTeam = {
 						text: 'INSERT INTO teams VALUES ($1, $2)',
 						values: [teamid, captain],
@@ -104,13 +138,13 @@ module.exports = {
 					await client.query(insertTeamRelation);
 					await client.query('COMMIT');
 					await interaction.editReply({
-						content:`Team ${teamname} registered!`,
+						content: `Team ${teamname} registered!`,
 						components: [],
 					});
 				}
-				catch (e) {
+				catch (err) {
 					client.query('ROLLBACK');
-					console.log(e.stack);
+					console.log(err.stack);
 				}
 				finally {
 					client.release();
@@ -126,8 +160,8 @@ module.exports = {
 		}
 		// register player subcommand
 		case 'player': {
-			const playername = interaction.options.getString('name');
-			const teamid = interaction.options.getString('team');
+			const playername = interaction.options.getString('username');
+			const teamid = interaction.options.getString('teamname');
 			const selectTeamName = {
 				text: 'SELECT teamname FROM teamlookup WHERE teamid=$1',
 				values: [teamid],
@@ -153,7 +187,7 @@ module.exports = {
 					try {
 						await client.query('BEGIN');
 						// insert player into users db
-						const userid = v4();
+						const userid = v4(0, null, 0);
 						const starter = interaction.options.getBoolean('starter');
 						const position = interaction.options.getString('position');
 						const insertPlayer = {
@@ -169,7 +203,7 @@ module.exports = {
 						await client.query(insertUserRelation);
 						await client.query('COMMIT');
 						await interaction.editReply({
-							content:`Player ${playername} registered for team ${teamname}!`,
+							content: `Player ${playername} registered for team ${teamname}!`,
 							components: [],
 						});
 					}
@@ -181,15 +215,9 @@ module.exports = {
 						client.release();
 					}
 				}
-				else if (button.customId === 'decline') {
-					await interaction.editReply({
-						content: 'Registration canceled.',
-						components: [],
-					});
-				}
 				else {
 					await interaction.editReply({
-						content: 'Something went wrong, contact ruuffian',
+						content: 'Registration canceled.',
 						components: [],
 					});
 				}
@@ -197,6 +225,14 @@ module.exports = {
 			catch (err) {
 				console.log(err.stack);
 			}
+			break;
+		}
+		default : {
+			await interaction.editReply({
+				content: 'Registration failed, contact ruuffian',
+				components: [],
+				ephemeral: true,
+			});
 			break;
 		}
 		}
