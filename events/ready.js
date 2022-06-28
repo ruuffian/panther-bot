@@ -9,7 +9,7 @@ module.exports = {
 			const content = await fs.readFile('config.json', 'utf-8');
 			const json = JSON.parse(content);
 			const selectTeams = {
-				text: 'SELECT * FROM teamlookup',
+				text: 'SELECT * FROM map_teamid_teamname',
 				values: [],
 			};
 			const teams = await db.query(selectTeams);
@@ -20,7 +20,7 @@ module.exports = {
 			json.registeredTeams = choices;
 			await fs.writeFile('config.json', JSON.stringify(json, null, '\t'), 'utf-8');
 			console.log('Updated registered teams in config.json');
-			// require('../deploy-commands');
+			require('../deploy-commands');
 			console.log(`Ready! Logged in as ${client.user.tag}`);
 		}
 		catch (err) {
